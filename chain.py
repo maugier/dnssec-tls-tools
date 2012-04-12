@@ -228,21 +228,21 @@ def buildChain(target):
   cname = CNAME(target)
   terminal = None
   if cname.cname is not None:
-    print '%s is a CNAME for %s' % (target, cname.cname)
+    print >>sys.stderr, '%s is a CNAME for %s' % (target, cname.cname)
     terminal = cname
   else:
     terminal = CAA(target)
     if not terminal.Valid():
-      print 'No good CAA records at %s' % target
+      print >>sys.stderr, 'No good CAA records at %s' % target
       assert(False)
 
   zoneNames = []
   t = target
-  print 'Zone listing for', target
+  print >>sys.stderr, 'Zone listing for', target
   while True:
     z = SOA(t).soa
     zoneNames.append(z)
-    print ' ', z
+    print >>sys.stderr, ' ', z
     if t == '.':
       break
     t = removeLeadingLabel(z)
@@ -361,7 +361,7 @@ def serialiseZones(out, zones, target):
         out.U16(len(serialised))
         out.append(serialised)
       else:
-        print '  using direct keying for', z.name
+        print sys.stderr >> '  using direct keying for', z.name
         out.U16(0)
 
       if not z.directKey:
@@ -426,7 +426,7 @@ def serialiseZones(out, zones, target):
       else:
         out.append(toDNSName(z.terminal.cname))
 
-    print "After %s: %d bytes" % (z.name, len(out.Bytes()))
+    print >>sys.stderr, "After %s: %d bytes" % (z.name, len(out.Bytes()))
 
   return minExpiry
 
@@ -440,7 +440,7 @@ def spliceZones(new, old):
 
 def main():
   if len(sys.argv) != 3:
-    print 'Usage: <target DNS name> <output filename>'
+    print >>sys.stderr, 'Usage: <target DNS name> <output filename>'
     return
   target = sys.argv[1]
   if not target.endswith('.'):
@@ -461,11 +461,11 @@ def main():
     if type(zones[-1].terminal) != CNAME:
       break
     target = zones[-1].terminal.cname
-    print 'Building new chain targetting %s' % target
+    print >>sys.stderr, 'Building new chain targetting %s' % target
     previousZones = zones
 
   file(sys.argv[2], 'w+').write(out.Bytes())
-  print 'Chain expires at %s' % time.ctime(minExpiry)
+  print >>sys.stderr, 'Chain expires at %s' % time.ctime(minExpiry)
 
 if __name__ == '__main__':
   main()
